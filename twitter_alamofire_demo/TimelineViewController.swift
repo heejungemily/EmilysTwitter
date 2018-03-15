@@ -22,7 +22,23 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
         
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 100
+        getTweets()
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(didPull(refreshControl:)), for: .valueChanged)
+        tableView.insertSubview(refreshControl, at: 0)
         
+    }
+    
+    @objc func didPull(refreshControl: UIRefreshControl) {
+        getTweets {
+            refreshControl.endRefreshing()
+        }
+    }
+    
+    
+    
+   
+    func getTweets(completion: (() -> Void)? = nil) {
         APIManager.shared.getHomeTimeLine { (tweets, error) in
             if let tweets = tweets {
                 self.tweets = tweets
@@ -30,8 +46,11 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
             } else if let error = error {
                 print("Error getting home timeline: " + error.localizedDescription)
             }
+            completion?()
         }
+        
     }
+    
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tweets.count
@@ -59,7 +78,12 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
         APIManager.shared.logout()
     }
     
-    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let vc = segue.destination as? DetailViewController {
+            let cell = sender as! TweetCell
+            vc.tweet = cell.tweet
+        }
+    }
     /*
      // MARK: - Navigation
      
